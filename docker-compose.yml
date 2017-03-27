@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  # Example application container, this is where your data is.
+  app:
+    image: alpine:3.5
+    # Simulate an application server with an endless loop.
+    command: sh -c 'while true; do sleep 10; done';
+    volumes:
+      - ./data:/data
+  # RSYNCD Server
+  rsyncd:
+    build: .
+    image: mickaelperrin/rsyncd-server:latest
+    environment:
+      # REQUIRED: For user/password authentication
+      - USERNAME=sftp
+      - PASSWORD=password
+      # REQUIRED: Should be the same as the volume mapping of app container
+      - VOLUME_PATH=/data
+      # OPTIONAL: If you want to restrict access to the volume in read only mode. (default false)
+      - READ_ONLY=false
+      # OPTIONAL: If you want to chroot the use of rsync. Be sure that your directory structure is compatible.
+      # See documentation
+      # (default no)
+      - CHROOT=yes
+      # OPTIONAL: customize the volume name in rsync (default: volume)
+      - VOLUME_NAME=data
+      # OPTIONAL: restrict connection from (default: 0.0.0.0/0)
+      - HOSTS_ALLOW=0.0.0.0/0
+      # OPTIONAL: define the user name or user ID that file transfers to and from that module should take place
+      # (default set to UID owner of VOLUME_PATH)
+      # - OWNER_ID = 1000
+      # OPTIONAL: specifies one or more group names/IDs that will be used when accessing the module. The first one will be the default group, and any extra ones be set as supplemental groups.
+      # (default set to GID owner of VOLUME_PATH)
+      # - GROUP_ID = 1000
+    ports:
+      - 18873:873
+    volumes_from:
+      - app
